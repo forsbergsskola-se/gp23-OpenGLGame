@@ -7,55 +7,11 @@ using namespace std;
 
 void processInput(GLFWwindow*);
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
 
-void error_callback(int error, const char* msg) {
-    cerr << " [" << error << "] " << msg << endl;
-}
 
 int main() {
+    Window window{ 800,600 };
 
-    glfwSetErrorCallback(error_callback);
-
-    // Initialize GLFW
-    if (!glfwInit()) { // Exit, if it failed
-        cout << "Failed to init GLFW" << endl;
-        return -1;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#if __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    // Request Window from Operating System
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
-    if (window == nullptr)
-    {
-        cout << "Failed to create GLFW window" << endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-
-    // Initialize GLAD (connects OpenGL Functions)
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        cout << "Failed to initialize GLAD" << endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
-
-    // Initialization ends here
     // ==================================================================
     // The Real Program starts here
     float red = 0;
@@ -68,7 +24,7 @@ int main() {
     glBindVertexArray(VAO);
 
     // ----- Create Array Buffer on the GPU and copy our vertices to GPU -------
-    float vertices[] = {
+    float vertices[] {
        1.0f, -0.5f, 0.0f,
         0.0f, -0.5f, 0.0f,
         0.5f,  0.5f, 0.0f
@@ -89,7 +45,7 @@ int main() {
     glGenVertexArrays(1, &VAO2);
     glBindVertexArray(VAO2);
 
-    float vertices2[] = {
+    float vertices2[] {
     -1.0f, -0.5f, 0.0f,
     0.0f, -0.5f, 0.0f,
     -0.5f, 0.5f, 0.0f
@@ -115,8 +71,7 @@ int main() {
         "{\n"
         "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
         "}\0";
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    unsigned int vertexShader{ glCreateShader(GL_VERTEX_SHADER) };
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
@@ -127,8 +82,7 @@ int main() {
         "{\n"
         "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
         "} \0";
-    unsigned int OrangefragmentShader;
-    OrangefragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    unsigned int OrangefragmentShader{ glCreateShader(GL_FRAGMENT_SHADER) };
     glShaderSource(OrangefragmentShader, 1, &OrangeShaderSource, NULL);
     glCompileShader(OrangefragmentShader);
     
@@ -139,22 +93,19 @@ int main() {
         "{\n"
         "    FragColor = vec4(1.0f, 1.0f, 0.2f, 1.0f);\n"
         "} \0";
-    unsigned int YellowfragmentShader;
-    YellowfragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    unsigned int YellowfragmentShader{ glCreateShader(GL_FRAGMENT_SHADER) };
     glShaderSource(YellowfragmentShader, 1, &YellowShaderSource, NULL);
     glCompileShader(YellowfragmentShader);
 
     // -------- Create Orange Shader Program (Render Pipeline) ---------
-    unsigned int OrangeShader;
-    OrangeShader = glCreateProgram();
+    unsigned int OrangeShader{ glCreateProgram() };
     glAttachShader(OrangeShader, vertexShader);
     glAttachShader(OrangeShader, OrangefragmentShader);
     glLinkProgram(OrangeShader);
     glUseProgram(OrangeShader);
     
-    // -------- Create Yellow Shader Program (Render Pipeline) ---------
-    unsigned int yellowShader;
-    yellowShader = glCreateProgram();
+    // -------- Create Yellow Shader Program (Rende,r Pipeline) ---------
+    unsigned int yellowShader{ glCreateProgram() };
     glAttachShader(yellowShader, vertexShader);
     glAttachShader(yellowShader, YellowfragmentShader);
     glLinkProgram(yellowShader);
