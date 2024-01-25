@@ -2,6 +2,11 @@
 #include <iostream>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
+#include "Window.h"
+#include "mesh.h"
+#include "Shader.h"
+#include "Material.h"
+#include "Triangle.h"
 
 using namespace std;
 
@@ -10,116 +15,74 @@ void processInput(GLFWwindow*);
 
 
 int main() {
+
     Window window{ 800,600 };
 
     // ==================================================================
     // The Real Program starts here
-    float red = 0;
+    float red{};
+    float vertices[]{
+           -1.0f, -0.5f, 0.0f,
+            0.0f, -0.5f, 0.0f,
+           -0.5f,  0.5f, 0.0f,
+           -1.0f, -0.5f, 0.0f,
+           -0.5f,  0.5f, 0.0f,
+           -1.0f, 0.5f, 0.0f
+    };
 
-    // ----- Create Vertex Array Object, which makes changing between VBOs easier -----
+    Mesh mesh1{vertices, size(vertices)};
 
-    //First trianglew
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    // ----- Create Array Buffer on the GPU and copy our vertices to GPU -------
-    float vertices[] {
-       1.0f, -0.5f, 0.0f,
+    float vertices2[]{
         0.0f, -0.5f, 0.0f,
+        1.0f, -0.5f, 0.0f,
         0.5f,  0.5f, 0.0f
     };
 
-    unsigned int VBO; // variable to store buffer id
-    glGenBuffers(1, &VBO); // ask open gl to create a buffer
-    glBindBuffer(GL_ARRAY_BUFFER, VBO); // tell gl to use this buffer
-    glBufferData(GL_ARRAY_BUFFER, // copy our vertices to the buffer
-        sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // so the vertex shader understands, where to find the input attributes, in this case position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    //Second Triangle
-    unsigned int VAO2;
-    glGenVertexArrays(1, &VAO2);
-    glBindVertexArray(VAO2);
-
-    float vertices2[] {
-    -1.0f, -0.5f, 0.0f,
-    0.0f, -0.5f, 0.0f,
-    -0.5f, 0.5f, 0.0f
-    };
-
-    unsigned int VBO2;
-    glGenBuffers(1, &VBO2);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
-
-
-    // ------ configure vertex attribute(s) (currently it's just one, the position) -----
-    // so the vertex shader understands, where to find the input attributes, in this case position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
+    Mesh mesh2{vertices2, size(vertices)};
 
     // ----- Compile the Vertex Shader on the GPU -------
-
-    const char* vertexShaderSource = "#version 330 core\n"
+    Shader vertexShader{"#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "void main()\n"
         "{\n"
         "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0";
-    unsigned int vertexShader{ glCreateShader(GL_VERTEX_SHADER) };
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
+        "}\0" , GL_VERTEX_SHADER};
+    
 
     // ------ Compile the Orange Fragment Shader on the GPU --------
-    const char* OrangeShaderSource = "#version 330 core\n"
+    Shader orangeShader("#version 330 core\n"
         "out vec4 FragColor;\n"
         "void main()\n"
         "{\n"
         "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "} \0";
-    unsigned int OrangefragmentShader{ glCreateShader(GL_FRAGMENT_SHADER) };
-    glShaderSource(OrangefragmentShader, 1, &OrangeShaderSource, NULL);
-    glCompileShader(OrangefragmentShader);
-    
+        "} \0", GL_FRAGMENT_SHADER);
+
     // ------ Compile the Yellow Fragment Shader on the GPU --------
-    const char* YellowShaderSource = "#version 330 core\n"
+    Shader yellowShader("#version 330 core\n"
         "out vec4 FragColor;\n"
         "void main()\n"
         "{\n"
-        "    FragColor = vec4(1.0f, 1.0f, 0.2f, 1.0f);\n"
-        "} \0";
-    unsigned int YellowfragmentShader{ glCreateShader(GL_FRAGMENT_SHADER) };
-    glShaderSource(YellowfragmentShader, 1, &YellowShaderSource, NULL);
-    glCompileShader(YellowfragmentShader);
+        "    FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
+        "} \0", GL_FRAGMENT_SHADER);
 
     // -------- Create Orange Shader Program (Render Pipeline) ---------
-    unsigned int OrangeShader{ glCreateProgram() };
-    glAttachShader(OrangeShader, vertexShader);
-    glAttachShader(OrangeShader, OrangefragmentShader);
-    glLinkProgram(OrangeShader);
-    glUseProgram(OrangeShader);
-    
-    // -------- Create Yellow Shader Program (Rende,r Pipeline) ---------
-    unsigned int yellowShader{ glCreateProgram() };
-    glAttachShader(yellowShader, vertexShader);
-    glAttachShader(yellowShader, YellowfragmentShader);
-    glLinkProgram(yellowShader);
-    glUseProgram(yellowShader);
+    Material orange(vertexShader, orangeShader);
+
+    // -------- Create Yellow Shader Program (Render Pipeline) ---------
+    Material yellow(vertexShader, yellowShader);
+
     // clean up shaders after they've been linked into a program
-    glDeleteShader(vertexShader);
-    glDeleteShader(OrangefragmentShader);
+    glDeleteShader(orangeShader.shaderID);
+    glDeleteShader(yellowShader.shaderID);
+
+    Triangle a{ &mesh1, &orange};
+    Triangle b{ &mesh2, &yellow };
 
     // While the User doesn't want to Quit (X Button, Alt+F4)
-    while (!glfwWindowShouldClose(window))
+    while (!window.shouldClose())
     {
         // process input (e.g. close window on Esc)
-        glfwPollEvents();
-        processInput(window);
+        window.processInput();
         red += 0.001f;
         if (red > 1)
             red -= 1;
@@ -128,24 +91,13 @@ int main() {
         glClearColor(red, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(OrangeShader);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        glUseProgram(yellowShader);
-        glBindVertexArray(VAO2);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        a.renderer();
+        b.renderer();
 
         // present (send the current frame to the computer screen)
-        glfwSwapBuffers(window); // ??
+        window.GLFWSwap();
     }
     // Cleans up all the GLFW stuff
     glfwTerminate();
     return 0;
-}
-
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
 }
