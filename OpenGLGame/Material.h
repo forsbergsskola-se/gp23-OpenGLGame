@@ -3,9 +3,10 @@
 #include "Shader.h"
 class Material
 {
-    unsigned int ShaderProgram;
 
 public:
+    unsigned int ShaderProgram;
+
 	Material(Shader& vertexShader, Shader &fragmentShader) {
         ShaderProgram = glCreateProgram();
         glAttachShader(ShaderProgram, vertexShader.shaderID);

@@ -7,6 +7,7 @@
 #include "Shader.h"
 #include "Material.h"
 #include "Triangle.h"
+#include "stb_image.h"
 
 using namespace std;
 
@@ -18,52 +19,61 @@ int main() {
 
     Window window{ 800,600 };
 
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+
     // ==================================================================
     // The Real Program starts here
     float red{};
-    float vertices[]{
-           -1.0f, -0.5f, 0.0f,
-            0.0f, -0.5f, 0.0f,
-           -0.5f,  0.5f, 0.0f,
-           -1.0f, -0.5f, 0.0f,
-           -0.5f,  0.5f, 0.0f,
-           -1.0f, 0.5f, 0.0f
+    Vertex vertices[]{
+           Vertex{Vector3{-1.0f, -0.5f, 0.0f}},
+           Vertex{Vector3{ 0.0f, -0.5f, 0.0f}},
+           Vertex{Vector3{-0.5f,  0.5f, 0.0f}},
+           Vertex{Vector3{-1.0f, -0.5f, 0.0f}},
+           Vertex{Vector3{-0.5f,  0.5f, 0.0f}},
+           Vertex{Vector3{-1.0f, 0.5f, 0.0f}}
     };
 
-    Mesh mesh1{vertices, size(vertices)};
+    Mesh mesh1{ vertices, size(vertices) };
 
-    float vertices2[]{
-        0.0f, -0.5f, 0.0f,
-        1.0f, -0.5f, 0.0f,
-        0.5f,  0.5f, 0.0f
+    Vertex vertices2[]{
+        Vertex{Vector3{0.0f, -0.5f, 0.0f},Color::red},
+        Vertex{Vector3{1.0f, -0.5f, 0.0f},Color::green},
+        Vertex{Vector3{0.5f,  0.5f, 0.0f},Color::blue}
     };
 
-    Mesh mesh2{vertices2, size(vertices)};
+    Mesh mesh2{ vertices2, size(vertices) };
+
+    Vertex vertices3[]{
+        // positions                           // colors           // texture coords
+        Vertex{Vector3{ 0.5f,  0.5f, 0.0f},   Color::red,          Vector2{1.0f, 1.0f}},   // top right
+        Vertex{Vector3{ 0.5f, -0.5f, 0.0f},   Color::green,        Vector2{1.0f, 0.0f}},   // bottom right
+        Vertex{Vector3{-0.5f, -0.5f, 0.0f},   Color::blue,         Vector2{0.0f, 0.0f}},   // bottom left
+        Vertex{Vector3{-0.5f,  0.5f, 0.0f},   Color::yellow,       Vector2{0.0f, 1.0f}}    // top left 
+    };
+
+    Mesh mesh3{ vertices3, size(vertices3) };
 
     // ----- Compile the Vertex Shader on the GPU -------
-    Shader vertexShader{"#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0" , GL_VERTEX_SHADER};
+    Shader vertexShader{"vertexShader.glsl", GL_VERTEX_SHADER};
     
 
     // ------ Compile the Orange Fragment Shader on the GPU --------
-    Shader orangeShader("#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "} \0", GL_FRAGMENT_SHADER);
+    Shader orangeShader{ "orangeFragmentShader.glsl", GL_FRAGMENT_SHADER };
 
     // ------ Compile the Yellow Fragment Shader on the GPU --------
-    Shader yellowShader("#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "    FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
-        "} \0", GL_FRAGMENT_SHADER);
+    Shader yellowShader{ "yellowFragmentShader.glsl", GL_FRAGMENT_SHADER };
+
+
+    Shader textureShader{ "textureFragmentShader.glsl", GL_FRAGMENT_SHADER };
+
 
     // -------- Create Orange Shader Program (Render Pipeline) ---------
     Material orange(vertexShader, orangeShader);
@@ -71,12 +81,18 @@ int main() {
     // -------- Create Yellow Shader Program (Render Pipeline) ---------
     Material yellow(vertexShader, yellowShader);
 
+    Material texture(vertexShader, textureShader);
+
     // clean up shaders after they've been linked into a program
     glDeleteShader(orangeShader.shaderID);
     glDeleteShader(yellowShader.shaderID);
 
-    Triangle a{ &mesh1, &orange};
-    Triangle b{ &mesh2, &yellow };
+    Triangle a(&orange ,&mesh1);
+    a.red = 1;
+    Triangle b{&yellow, &mesh2 };
+    b.red = 0.5;
+    Triangle c(&texture, &mesh3);
+    c.red = 0.25;
 
     // While the User doesn't want to Quit (X Button, Alt+F4)
     while (!window.shouldClose())
@@ -91,8 +107,10 @@ int main() {
         glClearColor(red, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        a.renderer();
-        b.renderer();
+        float time = glfwGetTime();
+        a.render(time);
+        b.render(time);
+        c.render(time);
 
         // present (send the current frame to the computer screen)
         window.GLFWSwap();
