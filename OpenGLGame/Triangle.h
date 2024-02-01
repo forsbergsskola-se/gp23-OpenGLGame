@@ -2,29 +2,48 @@
 
 #include "Mesh.h"
 #include "Material.h"
+#include "Texture.h"
+
+
 
 class Triangle
 {
     Mesh* mesh;
     Material* material;
+    Texture* texture;
 
 public:
     float red;
-    Triangle(Material* _material, Mesh* _mesh) {
+    float horizontalOffset;
+    Triangle(Material* _material, Mesh* _mesh, Texture* _texture) {
         mesh = _mesh;
         material = _material;
+        texture = _texture;
     }
 
-    void render(float time) {
+    void render() {
         material->use();
 
         int tintLocation = glGetUniformLocation(
             material->ShaderProgram, "tintColor");
         glUniform4f(tintLocation, red, 0, 0, 1);
 
-        int timeLocation = glGetUniformLocation(
-            material->ShaderProgram, "time");
-        glUniform1f(timeLocation, time);
+        int offsetLocation = glGetUniformLocation(
+            material->ShaderProgram, "horizontalOffset");
+        glUniform1f(offsetLocation, horizontalOffset);
+
+        int diffuseLocation = glGetUniformLocation(material->ShaderProgram, "diffuseTexture");
+        glUniform1i(diffuseLocation, 0);
+
+        glActiveTexture(GL_TEXTURE0);
+        if (texture != nullptr) {
+            glBindTexture(GL_TEXTURE_2D, texture->textureID);
+        }
+        else {
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+        int blendLocation = glGetUniformLocation(material->ShaderProgram, "blendTexture");
+        glUniform1i(blendLocation, 1);
 
         mesh->Render();
     }

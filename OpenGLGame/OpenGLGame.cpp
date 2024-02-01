@@ -8,11 +8,11 @@
 #include "Material.h"
 #include "Triangle.h"
 #include "stb_image.h"
+#include "Texture.h"
 
 using namespace std;
 
 void processInput(GLFWwindow*);
-
 
 
 int main() {
@@ -20,14 +20,12 @@ int main() {
     Window window{ 800,600 };
 
     int width, height, nrChannels;
-    unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
+    //Generate container image
+    Texture container{ "container.jpg", GL_TEXTURE0 };
+    
+    //Generate wall image
+    Texture wall{ "wall.jpg", GL_TEXTURE1 };
 
     // ==================================================================
     // The Real Program starts here
@@ -56,7 +54,10 @@ int main() {
         Vertex{Vector3{ 0.5f,  0.5f, 0.0f},   Color::red,          Vector2{1.0f, 1.0f}},   // top right
         Vertex{Vector3{ 0.5f, -0.5f, 0.0f},   Color::green,        Vector2{1.0f, 0.0f}},   // bottom right
         Vertex{Vector3{-0.5f, -0.5f, 0.0f},   Color::blue,         Vector2{0.0f, 0.0f}},   // bottom left
-        Vertex{Vector3{-0.5f,  0.5f, 0.0f},   Color::yellow,       Vector2{0.0f, 1.0f}}    // top left 
+
+        Vertex{Vector3{-0.5f,  0.5f, 0.0f},   Color::yellow,       Vector2{0.0f, 1.0f}},     // top left
+        Vertex{Vector3{-0.5f, -0.5f, 0.0f},   Color::blue,         Vector2{0.0f, 0.0f}},
+        Vertex{Vector3{ 0.5f,  0.5f, 0.0f},   Color::red,          Vector2{1.0f, 1.0f}},
     };
 
     Mesh mesh3{ vertices3, size(vertices3) };
@@ -66,51 +67,56 @@ int main() {
     
 
     // ------ Compile the Orange Fragment Shader on the GPU --------
-    Shader orangeShader{ "orangeFragmentShader.glsl", GL_FRAGMENT_SHADER };
+   // Shader orangeShader{"orangeFragmentShader.glsl", GL_FRAGMENT_SHADER };
 
     // ------ Compile the Yellow Fragment Shader on the GPU --------
-    Shader yellowShader{ "yellowFragmentShader.glsl", GL_FRAGMENT_SHADER };
+   // Shader yellowShader{"yellowFragmentShader.glsl", GL_FRAGMENT_SHADER };
 
 
-    Shader textureShader{ "textureFragmentShader.glsl", GL_FRAGMENT_SHADER };
+    Shader textureShader{"textureFragmentShader.glsl", GL_FRAGMENT_SHADER };
 
 
     // -------- Create Orange Shader Program (Render Pipeline) ---------
-    Material orange(vertexShader, orangeShader);
+    //Material orange(vertexShader, orangeShader);
 
     // -------- Create Yellow Shader Program (Render Pipeline) ---------
-    Material yellow(vertexShader, yellowShader);
+    //Material yellow(vertexShader, yellowShader);
 
     Material texture(vertexShader, textureShader);
 
     // clean up shaders after they've been linked into a program
-    glDeleteShader(orangeShader.shaderID);
-    glDeleteShader(yellowShader.shaderID);
+    //glDeleteShader(orangeShader.shaderID);
+    //glDeleteShader(yellowShader.shaderID);
 
-    Triangle a(&orange ,&mesh1);
-    a.red = 1;
-    Triangle b{&yellow, &mesh2 };
-    b.red = 0.5;
-    Triangle c(&texture, &mesh3);
-    c.red = 0.25;
+    //Triangle a(&orange ,&mesh1);
+    //a.red = 1;
+    //Triangle b{&yellow, &mesh2 };
+    //b.red = 0.5;
+    Triangle c(&texture, &mesh3, &wall);
+    c.horizontalOffset = -0.5f;
+    Triangle d(&texture, &mesh3, &container);
+    d.horizontalOffset = +0.5f;
+
+
 
     // While the User doesn't want to Quit (X Button, Alt+F4)
     while (!window.shouldClose())
     {
         // process input (e.g. close window on Esc)
         window.processInput();
-        red += 0.001f;
-        if (red > 1)
-            red -= 1;
+        
+        red = 0.5;
+        //if (red > 1)
+        //    red -= 1;
 
         // render (paint the current frame of the game)
         glClearColor(red, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        float time = glfwGetTime();
-        a.render(time);
-        b.render(time);
-        c.render(time);
+        //a.render();
+        //b.render();
+        c.render();
+        d.render();
 
         // present (send the current frame to the computer screen)
         window.GLFWSwap();
