@@ -56,8 +56,8 @@ int main() {
         Vertex{Vector3{-0.5f, -0.5f, 0.0f},   Color::blue,         Vector2{0.0f, 0.0f}},   // bottom left
 
         Vertex{Vector3{-0.5f,  0.5f, 0.0f},   Color::yellow,       Vector2{0.0f, 1.0f}},     // top left
-        Vertex{Vector3{-0.5f, -0.5f, 0.0f},   Color::blue,         Vector2{0.0f, 0.0f}},
-        Vertex{Vector3{ 0.5f,  0.5f, 0.0f},   Color::red,          Vector2{1.0f, 1.0f}},
+        Vertex{Vector3{-0.5f, -0.5f, 0.0f},   Color::blue,         Vector2{0.0f, 0.0f}},     // bottom left
+        Vertex{Vector3{ 0.5f,  0.5f, 0.0f},   Color::red,          Vector2{1.0f, 1.0f}},     // top right
     };
 
     Mesh mesh3{ vertices3, size(vertices3) };
