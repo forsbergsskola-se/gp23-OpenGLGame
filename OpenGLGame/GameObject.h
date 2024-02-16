@@ -3,49 +3,59 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "Texture.h"
+#include "../Maths/Matrix4x4.h"
 
-
-
-class Triangle
+class GameObject
 {
-    Mesh* mesh;
+    const Mesh* mesh;
     Material* material;
     Texture* texture;
 
 public:
     float red;
-    float horizontalOffset;
-    Triangle(Material* _material, Mesh* _mesh, Texture* _texture) {
+    Vector3 position = Vector3{ 0, 0, 0 };
+    Vector3 rotation = Vector3{ 0, 0, 0 };
+    GameObject(Material* _material, const Mesh* _mesh, Texture* _texture = nullptr) {
         mesh = _mesh;
         material = _material;
         texture = _texture;
     }
 
     void render() {
+
         material->use();
 
         int tintLocation = glGetUniformLocation(
             material->ShaderProgram, "tintColor");
         glUniform4f(tintLocation, red, 0, 0, 1);
 
-        int offsetLocation = glGetUniformLocation(
-            material->ShaderProgram, "horizontalOffset");
-        glUniform1f(offsetLocation, horizontalOffset);
+        Matrix4x4 matTranslation = Matrix4x4::Translation(position);
+        Matrix4x4 matRotation = Matrix4x4::Rotation(rotation);
 
-        int diffuseLocation = glGetUniformLocation(material->ShaderProgram, "diffuseTexture");
+        Matrix4x4 transform = matTranslation * matRotation;
+
+        int transformLocation = glGetUniformLocation(
+            material->ShaderProgram, "transform");
+        glUniformMatrix4fv(transformLocation, 1, GL_TRUE, &transform.m11);
+
+        int diffuseLocation = glGetUniformLocation(
+            material->ShaderProgram, "diffuseTexture");
         glUniform1i(diffuseLocation, 0);
 
         glActiveTexture(GL_TEXTURE0);
+
         if (texture != nullptr) {
             glBindTexture(GL_TEXTURE_2D, texture->textureID);
         }
         else {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
-        int blendLocation = glGetUniformLocation(material->ShaderProgram, "blendTexture");
+
+        int blendLocation = glGetUniformLocation(
+            material->ShaderProgram, "blendTexture");
         glUniform1i(blendLocation, 1);
 
-        mesh->Render();
+        mesh->render();
     }
 };
 

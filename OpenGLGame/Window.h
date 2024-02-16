@@ -18,15 +18,13 @@ class Window
     static void error_callback(int error, const char* msg) {
         cerr << " [" << error << "] " << msg << endl;
     }
+    GLFWwindow* window;
 
 public:
-    // public GLFWwindow* as a hacky workaround so that
-    // our main() can still use it for rendering and input
-    GLFWwindow* window;
     // we introduced a bool to show whether creating the window
     // was successful or not
     bool success{};
-    Window(int width, int height) {
+    Window(int width, int height) { // Start (Awake)
         glfwSetErrorCallback(error_callback);
 
         // Initialize GLFW
@@ -43,7 +41,7 @@ public:
 #endif
 
         // Request Window from Operating System
-        // And assign it to public class variable, so it can 
+        // And assign it to public class variable, so it can
         // be accessed from the outside
         window = glfwCreateWindow(800, 600,
             "LearnOpenGL", nullptr, nullptr);
@@ -66,6 +64,7 @@ public:
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
         glfwGetFramebufferSize(window, &width, &height);
         glViewport(0, 0, width, height);
+        glEnable(GL_DEPTH_TEST);
 
         // Initialization ends here
         success = true; // We set success to be true
@@ -75,16 +74,19 @@ public:
         return glfwWindowShouldClose(this->window);
     }
 
+    void present() {
+        glfwSwapBuffers(window);
+    }
+
     void processInput()
     {
         glfwPollEvents();
-
-        if (glfwGetKey(this->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(this->window, true);
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
     }
 
-    void GLFWSwap() {
-        glfwSwapBuffers(window); // ??
+    void clear() {
+        glClearColor(0.0f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
-
 };
